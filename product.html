@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>DeployFlow Product | Functional Demo</title>
+  <base href="/">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: "General Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #07070b;
+      color: #fff;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .drag-handle { cursor: grab; }
+    .drag-handle:active { cursor: grabbing; }
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 60;
+      background: rgba(10, 10, 14, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e4e4e7;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <header class="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="text-xl font-semibold">DeployFlow Product</div>
+      <div class="flex items-center gap-3">
+        <a href="/" class="px-4 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/70">Landing</a>
+        <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noreferrer" class="px-4 py-2 rounded-lg bg-white text-black text-sm font-semibold">Watch Demo</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-10">
+    <div class="mb-8">
+      <h1 class="text-4xl font-semibold">Objective Features Workspace</h1>
+      <p class="text-zinc-300 mt-3 max-w-3xl">
+        This page focuses on DeployFlow core requirements: task management, focus timer, quick actions, activity log, drag-and-drop module reordering, and persistent local state.
+      </p>
+    </div>
+
+    <div class="glass rounded-3xl p-5 md:p-7">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <p class="text-sm text-zinc-300">Interactive workspace</p>
+        <button id="demoResetBtn" class="px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/70">Reset Demo Data</button>
+      </div>
+
+      <div id="demoModules" class="grid lg:grid-cols-2 gap-4">
+        <section data-id="focus" class="glass rounded-2xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold">Focus session</h3>
+            <button class="drag-handle text-xs px-2 py-1 rounded-md border border-zinc-700 text-zinc-300">Drag</button>
+          </div>
+          <p class="text-sm text-zinc-400 mb-3">Run a focused execution cycle.</p>
+          <div class="text-3xl font-semibold mb-3" id="focusTimerLabel">25:00</div>
+          <div class="flex gap-2">
+            <button id="focusStartBtn" class="px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-medium">Start</button>
+            <button id="focusPauseBtn" class="px-4 py-2 rounded-lg border border-zinc-700 text-zinc-200 text-sm">Pause</button>
+            <button id="focusResetBtn" class="px-4 py-2 rounded-lg border border-zinc-700 text-zinc-200 text-sm">Reset</button>
+          </div>
+        </section>
+
+        <section data-id="tasks" class="glass rounded-2xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold">Task manager</h3>
+            <button class="drag-handle text-xs px-2 py-1 rounded-md border border-zinc-700 text-zinc-300">Drag</button>
+          </div>
+          <form id="taskForm" class="flex flex-wrap gap-2 mb-3">
+            <input id="taskTitleInput" class="flex-1 min-w-[180px] px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-700 text-sm" placeholder="Add task">
+            <input id="taskMinutesInput" type="number" min="1" class="w-28 px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-700 text-sm" placeholder="Minutes">
+            <button class="px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-medium" type="submit">Add</button>
+          </form>
+          <div id="taskList" class="space-y-2 text-sm"></div>
+          <p id="taskEmptyState" class="text-zinc-500 text-sm">No tasks yet.</p>
+        </section>
+
+        <section data-id="actions" class="glass rounded-2xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold">Quick actions</h3>
+            <button class="drag-handle text-xs px-2 py-1 rounded-md border border-zinc-700 text-zinc-300">Drag</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="quick-action px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/60" data-action="Generate analytics summary">Analytics</button>
+            <button class="quick-action px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/60" data-action="Open schedule overview">Schedule</button>
+            <button class="quick-action px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/60" data-action="Sync team status">Team Sync</button>
+            <button class="quick-action px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/60" data-action="Create custom widget">Add Widget</button>
+          </div>
+        </section>
+
+        <section data-id="activity" class="glass rounded-2xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold">Activity log</h3>
+            <button class="drag-handle text-xs px-2 py-1 rounded-md border border-zinc-700 text-zinc-300">Drag</button>
+          </div>
+          <div id="activityList" class="space-y-2 text-sm text-zinc-300"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    (function () {
+      const demoModules = document.getElementById("demoModules");
+      const activityList = document.getElementById("activityList");
+      const taskList = document.getElementById("taskList");
+      const taskEmptyState = document.getElementById("taskEmptyState");
+      const taskForm = document.getElementById("taskForm");
+      const taskTitleInput = document.getElementById("taskTitleInput");
+      const taskMinutesInput = document.getElementById("taskMinutesInput");
+      const focusTimerLabel = document.getElementById("focusTimerLabel");
+      const focusStartBtn = document.getElementById("focusStartBtn");
+      const focusPauseBtn = document.getElementById("focusPauseBtn");
+      const focusResetBtn = document.getElementById("focusResetBtn");
+      const demoResetBtn = document.getElementById("demoResetBtn");
+      const quickActionBtns = document.querySelectorAll(".quick-action");
+      const toast = document.getElementById("toast");
+
+      const LS_KEYS = {
+        tasks: "deployflow-demo-tasks-v1",
+        activity: "deployflow-demo-activity-v1",
+        order: "deployflow-demo-module-order-v1",
+        focus: "deployflow-demo-focus-v1"
+      };
+
+      let tasks = [];
+      let activity = [];
+      let focus = { total: 25 * 60, remaining: 25 * 60, running: false, startedAt: null };
+      let focusTick = null;
+
+      function showToast(message) {
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.setTimeout(() => toast.classList.remove("show"), 1500);
+      }
+
+      function persist() {
+        localStorage.setItem(LS_KEYS.tasks, JSON.stringify(tasks));
+        localStorage.setItem(LS_KEYS.activity, JSON.stringify(activity.slice(0, 20)));
+        localStorage.setItem(LS_KEYS.focus, JSON.stringify(focus));
+      }
+
+      function load() {
+        try { tasks = JSON.parse(localStorage.getItem(LS_KEYS.tasks) || "[]"); } catch (e) { tasks = []; }
+        try { activity = JSON.parse(localStorage.getItem(LS_KEYS.activity) || "[]"); } catch (e) { activity = []; }
+        try {
+          const storedFocus = JSON.parse(localStorage.getItem(LS_KEYS.focus) || "null");
+          if (storedFocus && typeof storedFocus.remaining === "number") focus = storedFocus;
+        } catch (e) {}
+      }
+
+      function addActivity(text) {
+        activity.unshift({ text: text, at: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) });
+        activity = activity.slice(0, 20);
+        renderActivity();
+        persist();
+      }
+
+      function renderActivity() {
+        if (!activityList) return;
+        if (!activity.length) {
+          activityList.innerHTML = "<p class='text-zinc-500'>No activity yet.</p>";
+          return;
+        }
+        activityList.innerHTML = activity.map((item) => (
+          "<div class='flex items-center justify-between gap-3 border border-zinc-800 rounded-lg px-3 py-2'>" +
+          "<span>" + item.text + "</span><span class='text-xs text-zinc-500'>" + item.at + "</span></div>"
+        )).join("");
+      }
+
+      function formatSeconds(totalSeconds) {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return String(mins).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
+      }
+
+      function updateFocusLabel() {
+        if (focusTimerLabel) focusTimerLabel.textContent = formatSeconds(Math.max(0, focus.remaining));
+      }
+
+      function runFocusTicker() {
+        if (focusTick) window.clearInterval(focusTick);
+        focusTick = window.setInterval(() => {
+          if (!focus.running || !focus.startedAt) return;
+          const elapsed = Math.floor((Date.now() - focus.startedAt) / 1000);
+          const next = Math.max(0, focus.total - elapsed);
+          focus.remaining = next;
+          updateFocusLabel();
+          if (next <= 0) {
+            focus.running = false;
+            focus.startedAt = null;
+            window.clearInterval(focusTick);
+            addActivity("Focus session completed");
+            showToast("Focus session completed");
+          }
+          persist();
+        }, 1000);
+      }
+
+      function renderTasks() {
+        if (!taskList || !taskEmptyState) return;
+        if (!tasks.length) {
+          taskList.innerHTML = "";
+          taskEmptyState.classList.remove("hidden");
+          return;
+        }
+        taskEmptyState.classList.add("hidden");
+        taskList.innerHTML = tasks.map((task) => (
+          "<div class='border border-zinc-800 rounded-lg px-3 py-2 flex items-center justify-between gap-3'>" +
+          "<label class='flex items-center gap-2 min-w-0'><input class='task-check' data-id='" + task.id + "' type='checkbox' " + (task.completed ? "checked" : "") + ">" +
+          "<span class='" + (task.completed ? "line-through text-zinc-500" : "text-zinc-200") + " truncate'>" + task.title + " (" + task.minutes + "m)</span></label>" +
+          "<button class='task-delete text-xs px-2 py-1 border border-zinc-700 rounded-md text-zinc-300' data-id='" + task.id + "'>Delete</button></div>"
+        )).join("");
+
+        document.querySelectorAll(".task-check").forEach((el) => {
+          el.addEventListener("change", (event) => {
+            const id = event.currentTarget.getAttribute("data-id");
+            tasks = tasks.map((t) => t.id === id ? Object.assign({}, t, { completed: event.currentTarget.checked }) : t);
+            persist();
+            renderTasks();
+            addActivity("Task status changed");
+          });
+        });
+
+        document.querySelectorAll(".task-delete").forEach((el) => {
+          el.addEventListener("click", (event) => {
+            const id = event.currentTarget.getAttribute("data-id");
+            tasks = tasks.filter((t) => t.id !== id);
+            persist();
+            renderTasks();
+            addActivity("Task deleted");
+            showToast("Task removed");
+          });
+        });
+      }
+
+      if (taskForm) {
+        taskForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const title = (taskTitleInput && taskTitleInput.value || "").trim();
+          const minutes = Number(taskMinutesInput && taskMinutesInput.value || 0);
+          if (!title || minutes <= 0) {
+            showToast("Add task title and minutes");
+            return;
+          }
+          tasks.unshift({ id: "t" + Date.now(), title: title.replace(/[<>]/g, ""), minutes: minutes, completed: false });
+          if (taskTitleInput) taskTitleInput.value = "";
+          if (taskMinutesInput) taskMinutesInput.value = "";
+          persist();
+          renderTasks();
+          addActivity("Task added: " + title);
+          showToast("Task added");
+        });
+      }
+
+      if (focusStartBtn) {
+        focusStartBtn.addEventListener("click", () => {
+          if (focus.running) return;
+          focus.running = true;
+          focus.total = focus.remaining;
+          focus.startedAt = Date.now();
+          runFocusTicker();
+          persist();
+          addActivity("Focus session started");
+          showToast("Focus started");
+        });
+      }
+
+      if (focusPauseBtn) {
+        focusPauseBtn.addEventListener("click", () => {
+          if (!focus.running || !focus.startedAt) return;
+          const elapsed = Math.floor((Date.now() - focus.startedAt) / 1000);
+          focus.remaining = Math.max(0, focus.total - elapsed);
+          focus.running = false;
+          focus.startedAt = null;
+          persist();
+          updateFocusLabel();
+          addActivity("Focus session paused");
+          showToast("Focus paused");
+        });
+      }
+
+      if (focusResetBtn) {
+        focusResetBtn.addEventListener("click", () => {
+          focus = { total: 25 * 60, remaining: 25 * 60, running: false, startedAt: null };
+          persist();
+          updateFocusLabel();
+          addActivity("Focus session reset");
+          showToast("Focus reset");
+        });
+      }
+
+      quickActionBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const action = btn.getAttribute("data-action") || "Quick action executed";
+          addActivity(action);
+          showToast(action);
+        });
+      });
+
+      if (demoResetBtn) {
+        demoResetBtn.addEventListener("click", () => {
+          Object.values(LS_KEYS).forEach((key) => localStorage.removeItem(key));
+          tasks = [];
+          activity = [];
+          focus = { total: 25 * 60, remaining: 25 * 60, running: false, startedAt: null };
+          renderTasks();
+          renderActivity();
+          updateFocusLabel();
+          showToast("Demo data reset");
+        });
+      }
+
+      if (window.Sortable && demoModules) {
+        try {
+          const storedOrder = JSON.parse(localStorage.getItem(LS_KEYS.order) || "[]");
+          if (storedOrder.length) {
+            storedOrder.forEach((id) => {
+              const el = demoModules.querySelector("[data-id='" + id + "']");
+              if (el) demoModules.appendChild(el);
+            });
+          }
+        } catch (e) {}
+
+        Sortable.create(demoModules, {
+          animation: 180,
+          handle: ".drag-handle",
+          onEnd: () => {
+            const order = Array.from(demoModules.querySelectorAll("[data-id]")).map((el) => el.getAttribute("data-id"));
+            localStorage.setItem(LS_KEYS.order, JSON.stringify(order));
+            addActivity("Module order updated");
+          }
+        });
+      }
+
+      load();
+      renderTasks();
+      renderActivity();
+      updateFocusLabel();
+      if (focus.running) {
+        focus.total = focus.remaining;
+        focus.startedAt = Date.now();
+        runFocusTicker();
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -2,390 +2,701 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Modular Mobile Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>DeployFlow | Plan, Focus, and Ship Faster</title>
   <link rel="canonical" href="/">
   <base href="/">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
   <style>
-    :root{
-       --bg:#09090b;
-       --panel: rgba(255,255,255,0.03);
-       --glass: rgba(255,255,255,0.04);
-       --accent1: #7c3aed;
-       --accent2: #06b6d4;
-       --accent3: #f97316;
+    :root {
+      --bg: #07070b;
+      --panel: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.08);
+      --text-muted: #a1a1aa;
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
     }
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: 'General Sans', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+
+    html, body { height: 100%; scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "General Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
       background: var(--bg);
       color: #fff;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-    .hide-scrollbar::-webkit-scrollbar{display:none}
-    .hide-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
-    .glass-panel{background: rgba(39,39,42,0.36);backdrop-filter: blur(10px);-webkit-backdrop-filter: blur(10px);border: 1px solid rgba(255,255,255,0.04)}
-    .mesh-gradient{background: radial-gradient(circle at 100% 0%, rgba(124,58,237,0.12) 0%, transparent 35%), radial-gradient(circle at 0% 100%, rgba(6,182,212,0.06) 0%, transparent 40%)}
-    .rounded-3xl{border-radius: 28px}
-    .drag-handle{touch-action:none}
-    .primary-cta:active{transform:scale(.985)}
-    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:60;padding:10px 16px;border-radius:12px;background:rgba(255,255,255,0.06);backdrop-filter: blur(6px);border:1px solid rgba(255,255,255,0.04);font-weight:600}
+
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(60px);
+      opacity: 0.45;
+      animation: float 9s ease-in-out infinite;
+    }
+
+    .orb.one { width: 360px; height: 360px; background: #7c3aed; top: -120px; left: -80px; }
+    .orb.two { width: 320px; height: 320px; background: #0891b2; right: -80px; top: 120px; animation-delay: 1.2s; }
+    .orb.three { width: 280px; height: 280px; background: #4f46e5; bottom: -100px; left: 28%; animation-delay: 2s; }
+
+    .glass {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+
+    .reveal.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hero-pulse {
+      animation: pulseGlow 2.4s ease-in-out infinite alternate;
+    }
+
+    .card-hover {
+      transition: transform .25s ease, border-color .25s ease, background .25s ease;
+    }
+
+    .card-hover:hover {
+      transform: translateY(-4px);
+      border-color: rgba(124, 58, 237, 0.7);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .demo-shell .drag-handle { cursor: grab; }
+    .demo-shell .drag-handle:active { cursor: grabbing; }
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 60;
+      background: rgba(10, 10, 14, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e4e4e7;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-18px); }
+    }
+
+    @keyframes pulseGlow {
+      from { box-shadow: 0 0 0 rgba(124, 58, 237, 0.25), 0 0 0 rgba(6, 182, 212, 0.2); }
+      to { box-shadow: 0 0 48px rgba(124, 58, 237, 0.48), 0 0 70px rgba(6, 182, 212, 0.25); }
+    }
   </style>
-  <script>
-    // If the page was loaded with /index.html, clean the URL to root without reloading
-    if (typeof history !== 'undefined') {
-      try {
-        if (location.pathname && /index\.html$/.test(location.pathname)) {
-          const newPath = location.pathname.replace(/index\.html$/, '') || '/';
-          history.replaceState(null, '', newPath + location.search + location.hash);
-        }
-      } catch (e) { /* noop */ }
-    }
-  </script>
 </head>
-<body>
-  <div class="min-h-screen flex flex-col relative overflow-hidden mesh-gradient">
-    <!-- Top safe spacer -->
-    <div style="height:env(safe-area-inset-top,20px)"></div>
+<body class="grid-bg">
+  <div class="relative overflow-hidden min-h-screen">
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+    <div class="orb three"></div>
 
-    <!-- Controls row (reset & info) -->
-    <div class="px-4 pt-3 pb-2 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <button id="resetLayout" class="glass-panel p-2 rounded-lg text-zinc-300 text-sm active:scale-95 focus:outline-none">Reset</button>
-        <span class="text-xs text-zinc-400">Drag handles to reorder</span>
+    <header class="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/70 backdrop-blur">
+      <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="text-xl font-semibold tracking-tight">DeployFlow</div>
+        <nav class="hidden md:flex items-center gap-7 text-sm text-zinc-300">
+          <a href="/product.html" class="hover:text-white">Product</a>
+          <button class="nav-link hover:text-white" data-target="features">Features</button>
+          <button class="nav-link hover:text-white" data-target="workflow">Workflow</button>
+          <button class="nav-link hover:text-white" data-target="pricing">Pricing</button>
+          <button class="nav-link hover:text-white" data-target="faq">FAQ</button>
+        </nav>
+        <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noreferrer" class="px-4 py-2 rounded-xl bg-white text-black text-sm font-semibold hover:bg-zinc-100">
+          Watch Demo
+        </a>
       </div>
-      <button id="helpBtn" class="text-zinc-400 p-2 rounded-lg hover:text-white"><iconify-icon icon="lucide:info" width="18"></iconify-icon></button>
-    </div>
+    </header>
 
-    <!-- Main scroll area with reorderable modules -->
-    <main id="modules" class="flex-1 overflow-y-auto hide-scrollbar px-4 pb-6 space-y-6">
+    <main>
+      <section class="max-w-6xl mx-auto px-6 pt-20 pb-14">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="reveal">
+            <p class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-indigo-400/40 text-indigo-300 text-xs font-medium mb-5">
+              End-to-end productivity command center
+            </p>
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-tight">
+              Plan work, focus deeply, and deliver faster with DeployFlow.
+            </h1>
+            <p class="mt-5 text-zinc-300 text-lg leading-relaxed max-w-xl">
+              DeployFlow combines modular planning, timer-based execution, and activity intelligence into one platform so teams can move from task to outcome without friction.
+            </p>
+            <div class="mt-8 flex flex-wrap gap-4">
+              <button class="nav-link px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-semibold hero-pulse" data-target="pricing">
+                Start Free
+              </button>
+              <a href="/product.html" class="px-6 py-3 rounded-xl border border-zinc-700 text-zinc-200 font-semibold hover:bg-zinc-800/70">
+                Open Product App
+              </a>
+              <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noreferrer" class="px-6 py-3 rounded-xl border border-zinc-700 text-zinc-200 font-semibold hover:bg-zinc-800/70">
+                View Product Walkthrough
+              </a>
+            </div>
+            <div class="mt-8 grid grid-cols-3 gap-4 max-w-md text-sm">
+              <div><p class="text-2xl font-semibold stat" data-target="92">0</p><p class="text-zinc-400">Task completion</p></div>
+              <div><p class="text-2xl font-semibold stat" data-target="38">0</p><p class="text-zinc-400">Faster planning</p></div>
+              <div><p class="text-2xl font-semibold stat" data-target="4">0</p><p class="text-zinc-400">Tools replaced</p></div>
+            </div>
+          </div>
 
-      <!-- Module: Context Header -->
-      <section data-id="context" class="module glass-panel rounded-3xl p-5 relative">
-        <div class="absolute -inset-0.5 rounded-3xl opacity-0 group-hover:opacity-100 transition"></div>
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Today</div>
-            <h1 class="mt-1 text-2xl lg:text-3xl font-semibold leading-tight">Good evening, <span class="text-zinc-400">Alex</span></h1>
-
-          <!-- Module: Tasks Manager -->
-          <section data-id="tasks" class="module glass-panel rounded-3xl p-4">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-medium text-zinc-400 uppercase tracking-wider">Tasks</h3>
-              <div class="flex items-center gap-2">
-                <button class="drag-handle glass-panel w-10 h-10 rounded-lg flex items-center justify-center text-zinc-300" aria-label="Reorder section" title="Reorder"><iconify-icon icon="lucide:move" width="16"></iconify-icon></button>
+          <div class="reveal glass rounded-3xl p-6 lg:p-7">
+            <div class="rounded-2xl bg-zinc-900/90 border border-zinc-800 p-5">
+              <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+                <h3 class="font-semibold text-lg">Live Workspace Snapshot</h3>
+                <span class="text-xs text-emerald-400">Synchronized</span>
+              </div>
+              <div class="space-y-4 mt-4">
+                <div class="glass rounded-xl p-4">
+                  <div class="text-xs uppercase tracking-wide text-zinc-500">Focus Session</div>
+                  <div class="mt-1 text-xl font-semibold">Design QA Handoff</div>
+                  <div class="text-sm text-zinc-400 mt-2">23m remaining</div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="glass rounded-xl p-4">
+                    <div class="text-xs text-zinc-500">Tasks Today</div>
+                    <div class="text-2xl font-semibold mt-1">14</div>
+                  </div>
+                  <div class="glass rounded-xl p-4">
+                    <div class="text-xs text-zinc-500">Completion Rate</div>
+                    <div class="text-2xl font-semibold mt-1">89%</div>
+                  </div>
+                </div>
+                <div class="glass rounded-xl p-4">
+                  <div class="text-xs text-zinc-500 mb-2">Recent Activity</div>
+                  <ul class="space-y-2 text-sm text-zinc-200">
+                    <li>Module order updated by Product team</li>
+                    <li>Analytics report generated automatically</li>
+                    <li>Focus cycle completed by 5 teammates</li>
+                  </ul>
+                </div>
               </div>
             </div>
-
-            <form id="taskForm" class="flex gap-2 items-center">
-              <input id="taskInput" type="text" placeholder="Add a task..." class="flex-1 p-3 rounded-xl bg-zinc-900 border border-zinc-800 placeholder-zinc-500 focus:outline-none" />
-              <input id="taskDuration" type="number" min="1" placeholder="mins" class="w-20 p-3 rounded-xl bg-zinc-900 border border-zinc-800 placeholder-zinc-500 focus:outline-none" />
-              <button type="submit" class="ml-2 px-4 py-3 rounded-xl bg-indigo-500 text-white font-semibold">Add</button>
-            </form>
-
-            <div id="taskList" class="mt-4 space-y-3"></div>
-            <div id="noTasks" class="mt-3 text-xs text-zinc-500">No tasks yet — add one above.</div>
-          </section>
-
-          <!-- Module: Recent Activity -->
-          <div class="flex items-start gap-2">
-            <button class="glass-panel w-10 h-10 rounded-lg flex items-center justify-center text-zinc-300 active:scale-95">
-              <iconify-icon icon="lucide:bell" width="18"></iconify-icon>
-            </button>
-            <button class="drag-handle glass-panel w-10 h-10 rounded-lg flex items-center justify-center text-zinc-300" aria-label="Reorder section" title="Reorder">
-              <iconify-icon icon="lucide:move" width="16"></iconify-icon>
-            </button>
           </div>
         </div>
       </section>
 
-      <!-- Module: Primary Action Block -->
-      <section data-id="primary" class="module relative group">
-        <div class="absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-indigo-500 to-purple-600 opacity-80 blur transition-all"></div>
-        <div class="relative p-6 rounded-3xl bg-zinc-900 overflow-hidden">
-          <div class="absolute right-0 top-0 w-44 h-44 bg-indigo-600/10 rounded-full blur-3xl translate-x-8 -translate-y-6"></div>
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="w-16 h-16 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg mb-4">
-                <iconify-icon icon="lucide:zap" width="26"></iconify-icon>
+      <section id="features" class="max-w-6xl mx-auto px-6 py-14">
+        <div class="reveal">
+          <h2 class="text-3xl font-semibold">Everything needed to run work with clarity</h2>
+          <p class="text-zinc-300 mt-3 max-w-2xl">Built around DeployFlow objectives: modular layouts, task ownership, timed execution, analytics, and shared activity visibility.</p>
+        </div>
+        <div class="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <article class="reveal glass card-hover rounded-2xl p-5">
+            <h3 class="font-semibold text-lg">Modular Workspace</h3>
+            <p class="text-zinc-400 text-sm mt-2">Reorder and personalize modules so each user sees what matters first.</p>
+          </article>
+          <article class="reveal glass card-hover rounded-2xl p-5">
+            <h3 class="font-semibold text-lg">Smart Task Manager</h3>
+            <p class="text-zinc-400 text-sm mt-2">Capture tasks quickly, estimate duration, and keep momentum with less context switching.</p>
+          </article>
+          <article class="reveal glass card-hover rounded-2xl p-5">
+            <h3 class="font-semibold text-lg">Focus Engine</h3>
+            <p class="text-zinc-400 text-sm mt-2">Run timer-driven sessions to improve execution quality and deep-work consistency.</p>
+          </article>
+          <article class="reveal glass card-hover rounded-2xl p-5">
+            <h3 class="font-semibold text-lg">Activity Timeline</h3>
+            <p class="text-zinc-400 text-sm mt-2">Track completed actions and system events with clear context for decisions.</p>
+          </article>
+          <article class="reveal glass card-hover rounded-2xl p-5">
+            <h3 class="font-semibold text-lg">Action Grid</h3>
+            <p class="text-zinc-400 text-sm mt-2">Use fast shortcuts for analytics, schedule, team checks, and custom widgets.</p>
+          </article>
+          <article class="reveal glass card-hover rounded-2xl p-5">
+            <h3 class="font-semibold text-lg">Persistent State</h3>
+            <p class="text-zinc-400 text-sm mt-2">Workspace order and task state persist, so users continue exactly where they left off.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="product-demo" class="max-w-6xl mx-auto px-6 py-14">
+        <div class="reveal mb-8">
+          <h2 class="text-3xl font-semibold">Interactive product demo</h2>
+          <p class="text-zinc-300 mt-3 max-w-2xl">This section implements the core objective features directly in the landing page. Add tasks, run focus sessions, reorder modules, trigger quick actions, and review activity updates with persisted state.</p>
+        </div>
+
+        <div class="reveal demo-shell glass rounded-3xl p-5 md:p-7">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <p class="text-sm text-zinc-300">Demo workspace</p>
+            <button id="demoResetBtn" class="px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/70">Reset Demo Data</button>
+          </div>
+
+          <div id="demoModules" class="grid lg:grid-cols-2 gap-4">
+            <section data-id="focus" class="glass rounded-2xl p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold">Focus session</h3>
+                <button class="drag-handle text-xs px-2 py-1 rounded-md border border-zinc-700 text-zinc-300">Drag</button>
               </div>
-              <h2 class="text-3xl font-semibold leading-tight">Start Focus Session</h2>
-              <p class="mt-2 text-sm text-zinc-300">25 min • High Intensity • Minimal distractions</p>
-            </div>
+              <p class="text-sm text-zinc-400 mb-3">Run a focused execution cycle.</p>
+              <div class="text-3xl font-semibold mb-3" id="focusTimerLabel">25:00</div>
+              <div class="flex gap-2">
+                <button id="focusStartBtn" class="px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-medium">Start</button>
+                <button id="focusPauseBtn" class="px-4 py-2 rounded-lg border border-zinc-700 text-zinc-200 text-sm">Pause</button>
+                <button id="focusResetBtn" class="px-4 py-2 rounded-lg border border-zinc-700 text-zinc-200 text-sm">Reset</button>
+              </div>
+            </section>
 
-            <div class="flex flex-col items-end gap-3">
-              <button id="primaryCTA" class="primary-cta w-14 h-14 rounded-full bg-white text-black flex items-center justify-center shadow-lg active:scale-95 focus:outline-none" aria-label="Start session">
-                <iconify-icon icon="lucide:play" width="18"></iconify-icon>
-              </button>
-              <button class="drag-handle glass-panel w-10 h-10 rounded-lg flex items-center justify-center text-zinc-300" aria-label="Reorder section" title="Reorder">
-                <iconify-icon icon="lucide:move" width="16"></iconify-icon>
-              </button>
-            </div>
+            <section data-id="tasks" class="glass rounded-2xl p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold">Task manager</h3>
+                <button class="drag-handle text-xs px-2 py-1 rounded-md border border-zinc-700 text-zinc-300">Drag</button>
+              </div>
+              <form id="taskForm" class="flex flex-wrap gap-2 mb-3">
+                <input id="taskTitleInput" class="flex-1 min-w-[180px] px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-700 text-sm" placeholder="Add task">
+                <input id="taskMinutesInput" type="number" min="1" class="w-28 px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-700 text-sm" placeholder="Minutes">
+                <button class="px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-medium" type="submit">Add</button>
+              </form>
+              <div id="taskList" class="space-y-2 text-sm"></div>
+              <p id="taskEmptyState" class="text-zinc-500 text-sm">No tasks yet.</p>
+            </section>
+
+            <section data-id="actions" class="glass rounded-2xl p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold">Quick actions</h3>
+                <button class="drag-handle text-xs px-2 py-1 rounded-md border border-zinc-700 text-zinc-300">Drag</button>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <button class="quick-action px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/60" data-action="Generate analytics summary">Analytics</button>
+                <button class="quick-action px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/60" data-action="Open schedule overview">Schedule</button>
+                <button class="quick-action px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/60" data-action="Sync team status">Team Sync</button>
+                <button class="quick-action px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-200 hover:bg-zinc-800/60" data-action="Create custom widget">Add Widget</button>
+              </div>
+            </section>
+
+            <section data-id="activity" class="glass rounded-2xl p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold">Activity log</h3>
+                <button class="drag-handle text-xs px-2 py-1 rounded-md border border-zinc-700 text-zinc-300">Drag</button>
+              </div>
+              <div id="activityList" class="space-y-2 text-sm text-zinc-300"></div>
+            </section>
           </div>
         </div>
       </section>
 
-      <!-- Module: Secondary Action List (Grid) -->
-      <section data-id="secondary" class="module">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-medium text-zinc-400 uppercase tracking-wider">Quick Actions</h3>
-          <div class="flex items-center gap-2">
-            <button class="glass-panel p-2 rounded-lg text-zinc-300"><iconify-icon icon="lucide:more-horizontal" width="16"></iconify-icon></button>
-            <button class="drag-handle glass-panel w-10 h-10 rounded-lg flex items-center justify-center text-zinc-300" aria-label="Reorder section" title="Reorder"><iconify-icon icon="lucide:move" width="16"></iconify-icon></button>
-          </div>
+      <section id="workflow" class="max-w-6xl mx-auto px-6 py-14">
+        <div class="reveal mb-8">
+          <h2 class="text-3xl font-semibold">One workflow from planning to delivery</h2>
+          <p class="text-zinc-300 mt-3 max-w-2xl">DeployFlow turns fragmented workflow steps into one connected operating layer.</p>
         </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <button class="glass-panel p-4 rounded-2xl flex flex-col items-start active:scale-95 transition" aria-label="Analytics">
-            <iconify-icon icon="lucide:bar-chart-2" class="text-purple-400 mb-3 text-2xl"></iconify-icon>
-            <div class="font-medium text-zinc-200">Analytics</div>
-            <div class="text-xs text-zinc-500 mt-1">Daily report ready</div>
-          </button>
-
-          <button class="glass-panel p-4 rounded-2xl flex flex-col items-start active:scale-95 transition" aria-label="Schedule">
-            <iconify-icon icon="lucide:calendar" class="text-pink-400 mb-3 text-2xl"></iconify-icon>
-            <div class="font-medium text-zinc-200">Schedule</div>
-            <div class="text-xs text-zinc-500 mt-1">3 events today</div>
-          </button>
-
-          <button class="glass-panel p-4 rounded-2xl flex flex-col items-start active:scale-95 transition" aria-label="Team">
-            <iconify-icon icon="lucide:users" class="text-blue-400 mb-3 text-2xl"></iconify-icon>
-            <div class="font-medium text-zinc-200">Team</div>
-            <div class="text-xs text-zinc-500 mt-1">12 active now</div>
-          </button>
-
-          <button class="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center active:scale-95 transition border-dashed border-zinc-700" aria-label="Add widget">
-            <iconify-icon icon="lucide:plus" class="text-zinc-500 text-2xl"></iconify-icon>
-            <div class="text-xs text-zinc-500 mt-2 font-medium">Add Widget</div>
-          </button>
+        <div class="grid md:grid-cols-4 gap-4">
+          <div class="reveal glass rounded-2xl p-5">
+            <p class="text-xs text-indigo-300 uppercase tracking-wide">Step 01</p>
+            <h3 class="mt-2 font-semibold">Capture</h3>
+            <p class="mt-2 text-sm text-zinc-400">Create structured tasks with expected effort in seconds.</p>
+          </div>
+          <div class="reveal glass rounded-2xl p-5">
+            <p class="text-xs text-indigo-300 uppercase tracking-wide">Step 02</p>
+            <h3 class="mt-2 font-semibold">Prioritize</h3>
+            <p class="mt-2 text-sm text-zinc-400">Use module ordering and quick actions to surface top priorities.</p>
+          </div>
+          <div class="reveal glass rounded-2xl p-5">
+            <p class="text-xs text-indigo-300 uppercase tracking-wide">Step 03</p>
+            <h3 class="mt-2 font-semibold">Execute</h3>
+            <p class="mt-2 text-sm text-zinc-400">Run focus sessions to complete tasks with measurable consistency.</p>
+          </div>
+          <div class="reveal glass rounded-2xl p-5">
+            <p class="text-xs text-indigo-300 uppercase tracking-wide">Step 04</p>
+            <h3 class="mt-2 font-semibold">Review</h3>
+            <p class="mt-2 text-sm text-zinc-400">Analyze activity logs and daily metrics to improve team output.</p>
+          </div>
         </div>
       </section>
 
-      <!-- Module: Recent Activity -->
-      <section data-id="activity" class="module glass-panel rounded-3xl p-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-medium text-zinc-400 uppercase tracking-wider">Activity Log</h3>
-          <div class="flex items-center gap-2">
-            <button class="text-xs text-zinc-500 hover:text-zinc-300">Filter</button>
-            <button class="drag-handle glass-panel w-10 h-10 rounded-lg flex items-center justify-center text-zinc-300" aria-label="Reorder section" title="Reorder"><iconify-icon icon="lucide:move" width="16"></iconify-icon></button>
-          </div>
+      <section id="pricing" class="max-w-6xl mx-auto px-6 py-14">
+        <div class="reveal text-center">
+          <h2 class="text-3xl font-semibold">Simple pricing for growing teams</h2>
+          <p class="text-zinc-300 mt-3">Start quickly and scale when you are ready.</p>
         </div>
-
-        <div class="space-y-3">
-          <div class="flex gap-4 items-start">
-            <div class="mt-1 w-2 h-2 rounded-full bg-emerald-500 shadow-lg"></div>
-            <div class="flex-1">
-              <div class="text-sm text-zinc-200 font-medium">Completed "Deep Work"</div>
-              <div class="text-xs text-zinc-500 mt-1">2 hours ago • Productivity</div>
-            </div>
-            <div class="text-xs text-zinc-600 font-mono">+120xp</div>
-          </div>
-
-          <div class="flex gap-4 items-start">
-            <div class="mt-1 w-2 h-2 rounded-full bg-blue-500"></div>
-            <div class="flex-1">
-              <div class="text-sm text-zinc-200 font-medium">Synced new devices</div>
-              <div class="text-xs text-zinc-500 mt-1">5 hours ago • System</div>
-            </div>
-            <iconify-icon icon="lucide:check" class="text-zinc-600 text-xs"></iconify-icon>
-          </div>
-
-          <div class="flex gap-4 items-start">
-            <div class="mt-1 w-2 h-2 rounded-full bg-zinc-600"></div>
-            <div class="flex-1">
-              <div class="text-sm text-zinc-200 font-medium">Updated preferences</div>
-              <div class="text-xs text-zinc-500 mt-1">Yesterday • Settings</div>
-            </div>
-          </div>
+        <div class="mt-8 grid md:grid-cols-3 gap-5">
+          <article class="reveal glass rounded-2xl p-6">
+            <h3 class="font-semibold text-lg">Starter</h3>
+            <p class="text-3xl font-semibold mt-4">Free</p>
+            <ul class="mt-5 text-sm text-zinc-300 space-y-2">
+              <li>Up to 3 team members</li>
+              <li>Core modules and task manager</li>
+              <li>Basic activity timeline</li>
+            </ul>
+          </article>
+          <article class="reveal glass rounded-2xl p-6 border-indigo-500/60">
+            <p class="text-xs text-indigo-300 uppercase tracking-wide">Most Popular</p>
+            <h3 class="font-semibold text-lg mt-2">Pro</h3>
+            <p class="text-3xl font-semibold mt-4">$19<span class="text-sm text-zinc-400">/user</span></p>
+            <ul class="mt-5 text-sm text-zinc-300 space-y-2">
+              <li>Unlimited members</li>
+              <li>Focus analytics and reporting</li>
+              <li>Advanced workspace customization</li>
+            </ul>
+          </article>
+          <article class="reveal glass rounded-2xl p-6">
+            <h3 class="font-semibold text-lg">Enterprise</h3>
+            <p class="text-3xl font-semibold mt-4">Custom</p>
+            <ul class="mt-5 text-sm text-zinc-300 space-y-2">
+              <li>Dedicated onboarding support</li>
+              <li>Security controls and SSO</li>
+              <li>Tailored implementation roadmap</li>
+            </ul>
+          </article>
         </div>
-
-        <button class="w-full mt-4 py-3 text-xs font-medium text-zinc-500 hover:text-zinc-300 transition-colors border border-zinc-800 rounded-xl hover:bg-zinc-800/50">
-          View Full History
-        </button>
       </section>
 
+      <section id="faq" class="max-w-6xl mx-auto px-6 py-14">
+        <div class="reveal">
+          <h2 class="text-3xl font-semibold">Frequently asked questions</h2>
+        </div>
+        <div class="mt-6 space-y-4">
+          <details class="reveal glass rounded-xl p-4">
+            <summary class="cursor-pointer font-medium">Is DeployFlow only for developers?</summary>
+            <p class="mt-2 text-zinc-400 text-sm">No, DeployFlow is designed for any team that plans and executes repeatable work cycles.</p>
+          </details>
+          <details class="reveal glass rounded-xl p-4">
+            <summary class="cursor-pointer font-medium">Can users customize their layout?</summary>
+            <p class="mt-2 text-zinc-400 text-sm">Yes, modules are designed to be personalized so each user can prioritize their own workspace.</p>
+          </details>
+          <details class="reveal glass rounded-xl p-4">
+            <summary class="cursor-pointer font-medium">Do you provide a product demo?</summary>
+            <p class="mt-2 text-zinc-400 text-sm">Yes, you can open the walkthrough directly from the demo links in this page.</p>
+          </details>
+        </div>
+      </section>
+
+      <section class="max-w-6xl mx-auto px-6 pt-8 pb-20">
+        <div class="reveal glass rounded-3xl p-8 text-center">
+          <h2 class="text-3xl font-semibold">Ready to simplify execution with DeployFlow?</h2>
+          <p class="text-zinc-300 mt-3">Replace scattered tools with one focused workflow platform for planning, execution, and progress visibility.</p>
+          <div class="mt-6 flex items-center justify-center gap-4 flex-wrap">
+            <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noreferrer" class="px-6 py-3 rounded-xl bg-white text-black font-semibold hover:bg-zinc-100">Get Product Tour</a>
+            <button class="nav-link px-6 py-3 rounded-xl border border-zinc-700 text-zinc-200 hover:bg-zinc-800/70" data-target="features">Explore Features</button>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <!-- Bottom tab bar -->
-    <footer class="shrink-0 pb-[34px] bg-zinc-950/80 backdrop-blur-md border-t border-zinc-800">
-      <nav class="flex justify-around items-center h-16">
-        <a href="#" class="flex flex-col items-center gap-1 text-indigo-400">
-          <iconify-icon icon="lucide:home" width="24"></iconify-icon>
-        </a>
-        <a href="#" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors">
-          <iconify-icon icon="lucide:pie-chart" width="24"></iconify-icon>
-        </a>
-        <a href="#" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors">
-          <iconify-icon icon="lucide:search" width="24"></iconify-icon>
-        </a>
-        <a href="#" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors">
-          <iconify-icon icon="lucide:user" width="24"></iconify-icon>
-        </a>
-      </nav>
+    <footer class="border-t border-zinc-800/90 py-8">
+      <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-sm text-zinc-400">
+        <p>DeployFlow</p>
+        <p>Built for modern teams to plan, focus, and deliver.</p>
+      </div>
     </footer>
   </div>
+  <div id="toast" class="toast"></div>
 
-  <!-- Toast -->
-  <div id="toast" class="toast hidden">Session started</div>
-
-  <!-- Sortable (drag & drop) -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script>
-    (function(){
-      const modulesEl = document.getElementById('modules');
-      const KEY = 'deployflow-modules-order-v1';
-      // Init Sortable for mobile-friendly drag
-      if(window.Sortable && modulesEl){
-        const sortable = Sortable.create(modulesEl, {
-          handle: '.drag-handle',
-          animation: 180,
-          fallbackOnBody: true,
-          swapThreshold: 0.65,
-          ghostClass: 'opacity-60',
-          onEnd: () => {
-            const order = Array.from(modulesEl.querySelectorAll('section[data-id]')).map(s => s.dataset.id);
-            try{ localStorage.setItem(KEY, JSON.stringify(order)); }catch(e){}
-          }
-        });
-      }
+    (function () {
+      const revealItems = document.querySelectorAll(".reveal");
+      const navLinks = document.querySelectorAll(".nav-link");
+      const stats = document.querySelectorAll(".stat");
+      const demoModules = document.getElementById("demoModules");
+      const activityList = document.getElementById("activityList");
+      const taskList = document.getElementById("taskList");
+      const taskEmptyState = document.getElementById("taskEmptyState");
+      const taskForm = document.getElementById("taskForm");
+      const taskTitleInput = document.getElementById("taskTitleInput");
+      const taskMinutesInput = document.getElementById("taskMinutesInput");
+      const focusTimerLabel = document.getElementById("focusTimerLabel");
+      const focusStartBtn = document.getElementById("focusStartBtn");
+      const focusPauseBtn = document.getElementById("focusPauseBtn");
+      const focusResetBtn = document.getElementById("focusResetBtn");
+      const demoResetBtn = document.getElementById("demoResetBtn");
+      const quickActionBtns = document.querySelectorAll(".quick-action");
+      const toast = document.getElementById("toast");
 
-      // Restore order if saved
-      try {
-        const saved = JSON.parse(localStorage.getItem(KEY) || '[]');
-        if (saved && saved.length) {
-          saved.forEach(id => {
-            const el = document.querySelector('section[data-id="'+id+'"]');
-            if (el) modulesEl.appendChild(el);
-          });
-        }
-      } catch(e){}
+      const LS_KEYS = {
+        tasks: "deployflow-demo-tasks-v1",
+        activity: "deployflow-demo-activity-v1",
+        order: "deployflow-demo-module-order-v1",
+        focus: "deployflow-demo-focus-v1"
+      };
 
-      // Reset layout
-      document.getElementById('resetLayout').addEventListener('click', function(){
-        localStorage.removeItem(KEY);
-        location.reload();
-      });
-
-      // Primary CTA behaviour (simple feedback)
-      const primaryBtn = document.getElementById('primaryCTA');
-      const toast = document.getElementById('toast');
-      function showToast(text){
-        toast.textContent = text;
-        toast.classList.remove('hidden');
-        toast.style.opacity = 1;
-        setTimeout(()=>{ toast.classList.add('hidden'); }, 1400);
-      }
-      if(primaryBtn){
-        primaryBtn.addEventListener('click', function(e){
-          e.currentTarget.animate([{transform:'scale(1)'},{transform:'scale(.96)'},{transform:'scale(1)'}],{duration:220});
-          showToast('Focus session started');
-        });
-      }
-
-      // Tasks manager
-      const TASK_KEY = 'deployflow-tasks-v1';
       let tasks = [];
-      const taskListEl = document.getElementById('taskList');
-      const noTasksEl = document.getElementById('noTasks');
-      const taskForm = document.getElementById('taskForm');
-      const taskInput = document.getElementById('taskInput');
-      const taskDuration = document.getElementById('taskDuration');
+      let activity = [];
+      let focus = { total: 25 * 60, remaining: 25 * 60, running: false, startedAt: null };
+      let focusTick = null;
 
-      function loadTasks(){
-        try{ tasks = JSON.parse(localStorage.getItem(TASK_KEY) || '[]'); }catch(e){ tasks = []; }
-      }
-      function saveTasks(){ try{ localStorage.setItem(TASK_KEY, JSON.stringify(tasks)); }catch(e){}
-      }
-      function escapeHtml(str){ return String(str).replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
-      function formatMs(s){ const m = Math.floor(s/60); const sec = s%60; return `${m}m ${String(sec).padStart(2,'0')}s`; }
-
-      function renderTasks(){
-        if(!taskListEl) return;
-        taskListEl.innerHTML = '';
-        if(!tasks.length){ noTasksEl.classList.remove('hidden'); return; } else { noTasksEl.classList.add('hidden'); }
-
-        tasks.forEach(task=>{
-          // compute remaining considering running timer
-          let remaining = task.remaining || 0;
-          if(task.timerRunning && task.startedAt){
-            const elapsed = Math.floor((Date.now() - task.startedAt)/1000);
-            remaining = Math.max(0, (task.remaining || 0) - elapsed);
-            if(remaining <= 0){
-              task.remaining = 0; task.timerRunning = false; task.startedAt = null; task.completed = true; saveTasks(); showToast('Task done: '+task.title);
-            }
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("show");
+            observer.unobserve(entry.target);
           }
+        });
+      }, { threshold: 0.14 });
 
-          const checked = task.completed ? 'checked' : '';
-          const timerLabel = (task.remaining && (task.remaining>0 || remaining>0)) ? formatMs(remaining) : '';
-          const container = document.createElement('div');
-          container.className = 'flex items-center justify-between gap-3 p-3 glass-panel rounded-xl';
-          container.innerHTML = `
-            <div class="flex items-center gap-3">
-              <input type="checkbox" data-id="${task.id}" ${checked} class="task-checkbox w-4 h-4 rounded-sm accent-indigo-500">
-              <div>
-                <div class="text-sm font-medium ${task.completed ? 'line-through text-zinc-500' : 'text-zinc-200'}">${escapeHtml(task.title)}</div>
-                <div class="text-xs text-zinc-500 mt-1">${task.due ? new Date(task.due).toLocaleString() : (timerLabel ? timerLabel : '')}</div>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              ${ task.remaining>0 ? `<button class="task-start btn p-2 rounded-md ${task.timerRunning ? 'bg-emerald-500 text-black' : 'glass-panel text-zinc-300'}" data-id="${task.id}" title="${task.timerRunning ? 'Pause' : 'Start'}"><iconify-icon icon="${task.timerRunning ? 'lucide:pause' : 'lucide:play'}" width="16"></iconify-icon></button>` : '' }
-              <button class="task-edit glass-panel p-2 rounded-md text-zinc-300" data-id="${task.id}" title="Edit"><iconify-icon icon="lucide:edit-2" width="14"></iconify-icon></button>
-              <button class="task-delete glass-panel p-2 rounded-md text-zinc-300" data-id="${task.id}" title="Delete"><iconify-icon icon="lucide:trash" width="14"></iconify-icon></button>
-            </div>
-          `;
-          taskListEl.appendChild(container);
-        });
+      revealItems.forEach((item) => observer.observe(item));
 
-        // events
-        taskListEl.querySelectorAll('.task-checkbox').forEach(cb=>{
-          cb.addEventListener('change', e=>{
-            const id = e.currentTarget.dataset.id;
-            const t = tasks.find(x=>x.id===id);
-            if(t){ t.completed = e.currentTarget.checked; saveTasks(); renderTasks(); }
-          });
+      navLinks.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const targetId = btn.getAttribute("data-target");
+          if (!targetId) return;
+          const target = document.getElementById(targetId);
+          if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
         });
-        taskListEl.querySelectorAll('.task-delete').forEach(btn=>{
-          btn.addEventListener('click', e=>{
-            const id = e.currentTarget.dataset.id; tasks = tasks.filter(t=>t.id!==id); saveTasks(); renderTasks();
-          });
-        });
-        taskListEl.querySelectorAll('.task-edit').forEach(btn=>{
-          btn.addEventListener('click', e=>{
-            const id = e.currentTarget.dataset.id; const t = tasks.find(x=>x.id===id); if(!t) return; const newTitle = prompt('Edit task', t.title); if(newTitle!==null){ t.title = newTitle.trim() || t.title; saveTasks(); renderTasks(); }
-          });
-        });
-        taskListEl.querySelectorAll('.task-start').forEach(btn=>{
-          btn.addEventListener('click', e=>{
-            const id = e.currentTarget.dataset.id; const t = tasks.find(x=>x.id===id); if(!t) return;
-            if(t.timerRunning){
-              const elapsed = Math.floor((Date.now() - t.startedAt)/1000); t.remaining = Math.max(0, (t.remaining||0) - elapsed); t.timerRunning = false; t.startedAt = null; saveTasks(); renderTasks();
-            } else {
-              if(!t.remaining || t.remaining<=0) return; t.timerRunning = true; t.startedAt = Date.now(); saveTasks(); renderTasks();
+      });
+
+      const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const el = entry.target;
+          const target = Number(el.getAttribute("data-target") || 0);
+          const suffix = target === 92 || target === 38 ? "%" : "x";
+          let current = 0;
+          const step = Math.max(1, Math.ceil(target / 38));
+          const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+              current = target;
+              clearInterval(timer);
             }
+            el.textContent = String(current) + suffix;
+          }, 30);
+          statsObserver.unobserve(el);
+        });
+      }, { threshold: 0.45 });
+
+      stats.forEach((stat) => statsObserver.observe(stat));
+
+      function showToast(message) {
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.setTimeout(() => toast.classList.remove("show"), 1500);
+      }
+
+      function persist() {
+        localStorage.setItem(LS_KEYS.tasks, JSON.stringify(tasks));
+        localStorage.setItem(LS_KEYS.activity, JSON.stringify(activity.slice(0, 20)));
+        localStorage.setItem(LS_KEYS.focus, JSON.stringify(focus));
+      }
+
+      function load() {
+        try { tasks = JSON.parse(localStorage.getItem(LS_KEYS.tasks) || "[]"); } catch (e) { tasks = []; }
+        try { activity = JSON.parse(localStorage.getItem(LS_KEYS.activity) || "[]"); } catch (e) { activity = []; }
+        try {
+          const storedFocus = JSON.parse(localStorage.getItem(LS_KEYS.focus) || "null");
+          if (storedFocus && typeof storedFocus.remaining === "number") focus = storedFocus;
+        } catch (e) {}
+      }
+
+      function addActivity(text) {
+        activity.unshift({ text: text, at: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) });
+        activity = activity.slice(0, 20);
+        renderActivity();
+        persist();
+      }
+
+      function renderActivity() {
+        if (!activityList) return;
+        if (!activity.length) {
+          activityList.innerHTML = "<p class='text-zinc-500'>No activity yet.</p>";
+          return;
+        }
+        activityList.innerHTML = activity.map((item) => (
+          "<div class='flex items-center justify-between gap-3 border border-zinc-800 rounded-lg px-3 py-2'>" +
+          "<span>" + item.text + "</span><span class='text-xs text-zinc-500'>" + item.at + "</span></div>"
+        )).join("");
+      }
+
+      function formatSeconds(totalSeconds) {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return String(mins).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
+      }
+
+      function updateFocusLabel() {
+        if (focusTimerLabel) focusTimerLabel.textContent = formatSeconds(Math.max(0, focus.remaining));
+      }
+
+      function runFocusTicker() {
+        if (focusTick) window.clearInterval(focusTick);
+        focusTick = window.setInterval(() => {
+          if (!focus.running || !focus.startedAt) return;
+          const elapsed = Math.floor((Date.now() - focus.startedAt) / 1000);
+          const next = Math.max(0, focus.total - elapsed);
+          focus.remaining = next;
+          updateFocusLabel();
+          if (next <= 0) {
+            focus.running = false;
+            focus.startedAt = null;
+            window.clearInterval(focusTick);
+            addActivity("Focus session completed");
+            showToast("Focus session completed");
+          }
+          persist();
+        }, 1000);
+      }
+
+      function renderTasks() {
+        if (!taskList || !taskEmptyState) return;
+        if (!tasks.length) {
+          taskList.innerHTML = "";
+          taskEmptyState.classList.remove("hidden");
+          return;
+        }
+        taskEmptyState.classList.add("hidden");
+        taskList.innerHTML = tasks.map((task) => (
+          "<div class='border border-zinc-800 rounded-lg px-3 py-2 flex items-center justify-between gap-3'>" +
+          "<label class='flex items-center gap-2 min-w-0'><input class='task-check' data-id='" + task.id + "' type='checkbox' " + (task.completed ? "checked" : "") + ">" +
+          "<span class='" + (task.completed ? "line-through text-zinc-500" : "text-zinc-200") + " truncate'>" + task.title + " (" + task.minutes + "m)</span></label>" +
+          "<button class='task-delete text-xs px-2 py-1 border border-zinc-700 rounded-md text-zinc-300' data-id='" + task.id + "'>Delete</button></div>"
+        )).join("");
+
+        document.querySelectorAll(".task-check").forEach((el) => {
+          el.addEventListener("change", (event) => {
+            const id = event.currentTarget.getAttribute("data-id");
+            tasks = tasks.map((t) => t.id === id ? Object.assign({}, t, { completed: event.currentTarget.checked }) : t);
+            persist();
+            renderTasks();
+            addActivity("Task status changed");
+          });
+        });
+
+        document.querySelectorAll(".task-delete").forEach((el) => {
+          el.addEventListener("click", (event) => {
+            const id = event.currentTarget.getAttribute("data-id");
+            tasks = tasks.filter((t) => t.id !== id);
+            persist();
+            renderTasks();
+            addActivity("Task deleted");
+            showToast("Task removed");
           });
         });
       }
 
-      taskForm && taskForm.addEventListener('submit', function(e){
-        e.preventDefault();
-        const title = (taskInput && taskInput.value || '').trim(); if(!title) return;
-        const mins = parseInt(taskDuration && taskDuration.value,10) || 0;
-        const task = { id: 't'+Date.now()+Math.random().toString(36).slice(2,8), title, createdAt: Date.now(), due: null, remaining: mins>0? mins*60:0, timerRunning:false, startedAt:null, completed:false };
-        tasks.unshift(task); saveTasks(); renderTasks(); if(taskInput) taskInput.value=''; if(taskDuration) taskDuration.value=''; showToast('Task added');
+      if (taskForm) {
+        taskForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const title = (taskTitleInput && taskTitleInput.value || "").trim();
+          const minutes = Number(taskMinutesInput && taskMinutesInput.value || 0);
+          if (!title || minutes <= 0) {
+            showToast("Add task title and minutes");
+            return;
+          }
+          tasks.unshift({ id: "t" + Date.now(), title: title.replace(/[<>]/g, ""), minutes: minutes, completed: false });
+          if (taskTitleInput) taskTitleInput.value = "";
+          if (taskMinutesInput) taskMinutesInput.value = "";
+          persist();
+          renderTasks();
+          addActivity("Task added: " + title);
+          showToast("Task added");
+        });
+      }
+
+      if (focusStartBtn) {
+        focusStartBtn.addEventListener("click", () => {
+          if (focus.running) return;
+          focus.running = true;
+          focus.total = focus.remaining;
+          focus.startedAt = Date.now();
+          runFocusTicker();
+          persist();
+          addActivity("Focus session started");
+          showToast("Focus started");
+        });
+      }
+
+      if (focusPauseBtn) {
+        focusPauseBtn.addEventListener("click", () => {
+          if (!focus.running || !focus.startedAt) return;
+          const elapsed = Math.floor((Date.now() - focus.startedAt) / 1000);
+          focus.remaining = Math.max(0, focus.total - elapsed);
+          focus.running = false;
+          focus.startedAt = null;
+          persist();
+          updateFocusLabel();
+          addActivity("Focus session paused");
+          showToast("Focus paused");
+        });
+      }
+
+      if (focusResetBtn) {
+        focusResetBtn.addEventListener("click", () => {
+          focus = { total: 25 * 60, remaining: 25 * 60, running: false, startedAt: null };
+          persist();
+          updateFocusLabel();
+          addActivity("Focus session reset");
+          showToast("Focus reset");
+        });
+      }
+
+      quickActionBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const action = btn.getAttribute("data-action") || "Quick action executed";
+          addActivity(action);
+          showToast(action);
+        });
       });
 
-      loadTasks(); renderTasks();
-      setInterval(()=>{ if(tasks.some(t=>t.timerRunning)) renderTasks(); }, 1000);
+      if (demoResetBtn) {
+        demoResetBtn.addEventListener("click", () => {
+          Object.values(LS_KEYS).forEach((key) => localStorage.removeItem(key));
+          tasks = [];
+          activity = [];
+          focus = { total: 25 * 60, remaining: 25 * 60, running: false, startedAt: null };
+          renderTasks();
+          renderActivity();
+          updateFocusLabel();
+          showToast("Demo data reset");
+        });
+      }
 
-      // Small accessibility: keyboard reordering
-      document.querySelectorAll('.drag-handle').forEach(btn=>{
-        btn.setAttribute('tabindex','0');
-      });
+      if (window.Sortable && demoModules) {
+        try {
+          const storedOrder = JSON.parse(localStorage.getItem(LS_KEYS.order) || "[]");
+          if (storedOrder.length) {
+            storedOrder.forEach((id) => {
+              const el = demoModules.querySelector("[data-id='" + id + "']");
+              if (el) demoModules.appendChild(el);
+            });
+          }
+        } catch (e) {}
+
+        Sortable.create(demoModules, {
+          animation: 180,
+          handle: ".drag-handle",
+          onEnd: () => {
+            const order = Array.from(demoModules.querySelectorAll("[data-id]")).map((el) => el.getAttribute("data-id"));
+            localStorage.setItem(LS_KEYS.order, JSON.stringify(order));
+            addActivity("Module order updated");
+          }
+        });
+      }
+
+      load();
+      renderTasks();
+      renderActivity();
+      updateFocusLabel();
+      if (focus.running) {
+        focus.total = focus.remaining;
+        focus.startedAt = Date.now();
+        runFocusTicker();
+      }
     })();
   </script>
 </body>
